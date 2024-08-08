@@ -1,0 +1,67 @@
+[gd_scene load_steps=11 format=3 uid="uid://c8iqf2touog2t"]
+
+[ext_resource type="PackedScene" uid="uid://bmu7ywn6v1wrq" path="res://player.tscn" id="1_a466s"]
+[ext_resource type="Script" path="res://Ground.gd" id="1_c80s6"]
+[ext_resource type="Script" path="res://Root.gd" id="1_gaq65"]
+[ext_resource type="PackedScene" uid="uid://b87f5diyvtw00" path="res://enemy.tscn" id="2_icmvn"]
+[ext_resource type="Script" path="res://EnemySpawner.gd" id="3_0uuka"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_s1d8h"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_mdu5t"]
+sky_material = SubResource("ProceduralSkyMaterial_s1d8h")
+
+[sub_resource type="Environment" id="Environment_hpvki"]
+background_mode = 2
+sky = SubResource("Sky_mdu5t")
+tonemap_mode = 2
+glow_enabled = true
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2v2mn"]
+size = Vector3(20, 1, 20)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_olwwq"]
+size = Vector2(100, 100)
+
+[node name="Root" type="Node3D"]
+script = ExtResource("1_gaq65")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_hpvki")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 2.98023e-08, 0, -2.98023e-08, 1, 0, 2.38419e-07, 1.19209e-07)
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("1_c80s6")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_2v2mn")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
+mesh = SubResource("PlaneMesh_olwwq")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.655176, 0.755476, 0, -0.755476, 0.655176, 0, 5.36776, 0)
+
+[node name="Player" parent="." instance=ExtResource("1_a466s")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="EnemySpawner" type="Node3D" parent="Player"]
+script = ExtResource("3_0uuka")
+cooldown = 0.1
+enemy = ExtResource("2_icmvn")
+
+[node name="Timer" type="Timer" parent="Player/EnemySpawner"]
+autostart = true
+
+[node name="Player2" parent="." instance=ExtResource("2_icmvn")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2, 0)
+
+[connection signal="ready" from="." to="StaticBody3D" method="resize_ground"]
+[connection signal="ready" from="." to="Player/EnemySpawner" method="_on_root_ready"]
+[connection signal="instantiate_enemy" from="Player/EnemySpawner" to="." method="_on_enemy_spawner_instantiate_enemy"]
+[connection signal="timeout" from="Player/EnemySpawner/Timer" to="Player/EnemySpawner" method="_on_timer_timeout"]
